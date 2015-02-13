@@ -98,6 +98,11 @@ button{
       // Do something special with overlapping loops?
       // Decide on string format for local storage vidname.loopnum.markertype : time ?
       // Consider using bootstrap
+      // How to do renaming?
+      // Ability to manually change loop's times after set
+      // Deleting loops?
+      // Careful not to confuse users with too many features - KISS
+      // Users should be able to set their own colors eventually
       //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	  
         // ~~~~~~~~~~ Global Vars ~~~~~~~~~~
@@ -110,7 +115,7 @@ button{
         var gotoTime = 0;			// Sets time for start of loop, floor
         var endTime = 9001;  		// Sets time for end of loop, ceil
         var curr_loop = 1;        // Current marker being worked with
-        var colors = ['red', 'green', 'blue'];  // Marker colors - better way to do?
+        var colors = ['red', 'green', 'blue', 'black', 'black', 'black', 'black', 'black'];  // Marker colors - better way to do?
 
         // Video properties
         var vid_height = 390;		// Height of video	default: 390
@@ -306,6 +311,7 @@ button{
             $("#myButton").data("state", "start");
             $("#myButton").text("Set loop start");
             $("#current_loop").html("Current loop: None");
+            $("#current_loop").css('color', 'black');
             return;
         }
         
@@ -340,6 +346,7 @@ button{
             // Update marker A
             update_a(in_time);
             $("#current_loop").html("Current loop: loop_"+curr_loop);
+            $("#current_loop").css('color', colors[curr_loop-1]);
         }
 
         function setEnd(in_time) {
@@ -386,6 +393,7 @@ button{
             update_b(loop_data.end);
             // Update current loop
             $("#current_loop").html("Current loop: " + loop_data.name);
+            $("#current_loop").css('color', colors[loop_data.num-1]);
             return;
         }
         /*
