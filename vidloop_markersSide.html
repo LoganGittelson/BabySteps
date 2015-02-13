@@ -314,6 +314,7 @@
             $("#myButton").text("Set loop start");
             $("#current_loop").html("Current loop: None");
             $("#current_loop").css('color', 'black');
+            $("#name_button").hide();
             loaded_loop = 0;
             return;
         }
@@ -399,6 +400,7 @@
             // Update current loop
             $("#current_loop").html("Current loop: " + loop_data.name);
             $("#current_loop").css('color', colors[loop_data.num-1]);
+            $("#name_button").show();
             return;
         }
         /*
@@ -417,7 +419,7 @@
         // Saving new loop
         function make_new_loop() {
             // Finalizes loop
-            loaded_loop = "#loop_"+curr_loop;
+            loaded_loop = "loop_"+curr_loop;  // Can only change name after end of loop is set! - maybe hide button
             // Create divs
             $("#loops_col").append( '<div id="loop_'+curr_loop+'" class="loop"></div>' );   // Maybe need to do something about id
             // Set color
@@ -426,6 +428,7 @@
             $("#loop_"+curr_loop).data("loop", {num: curr_loop, start: gotoTime, end: endTime, name: "loop_"+curr_loop});
             // Set display
             $("#loop_"+curr_loop).html(sec_to_min(gotoTime) + " - " + sec_to_min(endTime) + " --- loop_"+curr_loop);
+            $("#name_button").show();
             
             // Any way to apply this pre-emptively to class once?
             $("#loop_"+curr_loop).click(function() {
@@ -469,6 +472,10 @@
         function name_button_click() {
         // Change prompt to something non-intrusive
             console.log("rename button clicked");
+            if(loaded_loop == 0){
+                alert("No loop loaded!");
+                return;
+            }
             var new_name = prompt("Please enter a name for the loop:", $('#'+loaded_loop).data("loop").name); //loaded_loop);
             if(new_name != null) {
                 // Update name
