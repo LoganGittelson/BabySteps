@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+<style>
+button{
+    font-size: 50px;
+    padding: 10px;
+}
+
+.abs_center{
+    margin-left: auto;
+    margin-right: auto;
+    width: 70%;
+	text-align: center;
+    /*background-color: #b0e0e6;*/
+}
+
+.rel_center{
+	display: inline-block;
+    /*width: 50%;
+    margin: auto 0;*/
+	/* background-color: #e0e0e6; */
+	text-align: left;
+}
+
+.rel_left{
+    text-align: left;
+    float: left;
+    z-index: -1;
+}
+
+/* first marker moves when second one is set, must change. Also need to make pretty */
+
+
+.marker{
+	/*position: absolute;
+	background-color: #e0e0e6;*/
+
+}
+
+.loop{
+    /* background-color: #e0e0e6; */
+}
+
+</style>
+</head>
+  <body>
+	<div id="load_in" class="abs_center">
+		<!-- <form onsubmit="load_submit()" id='load_form'> -->
+		<form id='load_form'>
+			https://www.youtube.com/watch?v= <input type="text" id="in_form" name="in_id" value="Ux1ECrNDZl4"<br>
+			<input type="submit" value="Submit">
+		</form>
+	</div>
+    <div id="loops_col" class="rel_left">
+        <p>Saved Loops</p>
+    </div>
+	<div id="main" class="abs_center">
+		<!-- 1. The <iframe> (and video player) will replace this <div> tag. -->
+		<div id="player" class="rel_center"></div>
+		<br>
+		<!-- Maybe make first markers dynamic -->
+		<div id="markers" class="rel_center">
+            <span id="marker_a" class="marker"></span>
+            <span id="marker_b" class="marker"></span>
+		</div>
+		<br>
+		<!-- Centre this bellow the video -->
+		<button id="myButton" class="rel_center" onclick="buttonClick()">Set loop start</button>
+	</div>
+
+    <script>
+	// Wrap all in $document.ready - breaks it, idk why
+	  // Logan Gittelson
+	  // For BabySteps (2015)
+      // GitHub Version
+	  // Started with this example: https://developers.google.com/youtube/iframe_api_reference#Getting_Started
+	  // Used this for time keeping: http://stackoverflow.com/questions/10175367/youtube-api-event-on-a-specified-time
+	  // Reference this to instrument: http://diveintohtml5.info/storage.html
+      
+	  //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      // Make markers pretty - use SVG
+	  // ! instrument - local storage (stores in browser)
+	  // Check for looping at end of video
+	  // Handle errors
+	  // Maybe give more than floor, like whole second
+	  // Consider preventing gui marker overlap somehow
+	  //	Maybe line up A on it's right, B on it's left?
+	  // prevent markers from being same? B from coming before A?
+      // Consider how to represent stored loops
+      // Indicate which loop is currently being played
+      // Make style for names uniform
+      // Add asserts for safety
+      // Consider putting pairs of markers inside their own parent div or span
+      // Add loop naming
+      // Improve behaviour on breaking out of unfinished loop
+      // Do something special with overlapping loops?
+      // Decide on string format for local storage vidname.loopnum.markertype : time ?
+      // Consider using bootstrap
+      //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	  
+        // ~~~~~~~~~~ Global Vars ~~~~~~~~~~
+        // Time keeping
+        var videotime = 0;  	  	// Checked time
+        var timeupdater = null;	    // Used for updating time
+
+        // Loop control
+        var amLooping = false; 	    // Whether video is currently looping - might want to get rid of this var
+        var gotoTime = 0;			// Sets time for start of loop, floor
+        var endTime = 9001;  		// Sets time for end of loop, ceil
+        var curr_loop = 1;        // Current marker being worked with
+        var colors = ['red', 'green', 'blue'];  // Marker colors - better way to do?
+
+        // Video properties
+        var vid_height = 390;		// Height of video	default: 390
+        var vid_width = 640;  	    // Width of video	default: 640
+        var vid_time = 0;			// Total time of the video
+        var vid_left = 0;			// Leftmost position of video
+        var vid_id = 'eMFJdHJ92nw'; // ID of the current video
+        // Google dev: 'M7lc1UVf-VE'
+        // Origami crane: 'Ux1ECrNDZl4'
+        // Valentine: 'eMFJdHJ92nw'
+
+        // This code loads the IFrame Player API code asynchronously.
+        var tag = document.createElement('script');
+
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        // This function creates an <iframe> (and YouTube player)
+        //    after the API code downloads.
+        var player;
+        
+        
+        // ~~~~~~~~~~ YouTube Functions ~~~~~~~~~~
+        
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+              height: vid_height,
+              width: vid_width,
+              videoId: vid_id,
+              events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onPlayerStateChange
+                // Add on error catch
+              }
+            });
+        }
+      
+        // when the player is ready, start checking the current time every 100 ms.
+        // Gotten from stack overflow
+        function onPlayerReady(event) {
+            console.log("Video is now ready!");
+            setup_time();
+            vid_left = $('#player').offset().left;
+            console.log(vid_left);
+            $('#markers').width(vid_width)
+            // Set up time keeping function
+            function updateTime() {
+                var oldTime = videotime;
+                if(player && player.getCurrentTime) {
+                  videotime = player.getCurrentTime();
+                }
+                if(videotime !== oldTime) {
+                  onProgress(videotime);
+                }
+            }
+            timeupdater = setInterval(updateTime, 100);
+            event.target.playVideo();
+        }
+        
+        function onPlayerStateChange(event) {
+            //console.log("States changed!");
+            // When new video is loaded in
+            //console.log(event.data);
+            // NOTE: currently set to happen EVERY time vid starts
+            if (event.data == -1) {
+                console.log("new video detected");
+                setup_time();
+            }
+            return;
+        }
+        
+        
+        // ~~~~~~~~~~ YouTube Helper Functions ~~~~~~~~~~
+        
+        // Gets called every 100ms
+        function onProgress(VT) {
+            //console.log(VT);
+            // If vid_time is errored, sets it up again
+            if(vid_time == 0){
+                setup_time();
+            }
+            // Loops when specified time is reached
+            // Won't catch end of video!
+            if(Math.floor(VT) == endTime && amLooping){
+                console.log("Time to automatically loop");
+                goLoop();
+            }
+            // Breaks loop when out of times
+            if(Math.floor(VT) > endTime || Math.ceil(VT) < gotoTime){
+                console.log("You have seeked outside of loop");
+                button_start();
+            }
+            // Loops at end of video - change to event detect instead
+            if(VT == vid_time) {
+                console.log("End of video reached!");
+                goLoop();
+            }
+            return;
+        }
+        
+        function sec_to_min(sec_time) {
+            my_mins = Math.floor(sec_time / 60);
+            my_secs = sec_time % 60;
+            var ret_time = my_mins + ':' + my_secs;
+            if (my_secs < 10) { ret_time = my_mins + ':0' + my_secs; }
+            return ret_time;
+        }
+
+        function setup_time() {
+            // Set properties
+            vid_time = player.getDuration();
+            console.log("total time set to:");
+            console.log(vid_time);
+            // Set to video end time and set loop to true
+            endTime = Math.ceil(vid_time);  // Shouldn't need ceil, but just in case...
+            amLooping = true;
+            return;
+        }
+        
+        //~~~~~~~~~~ Document Ready / Video Loading ~~~~~~~~~~
+        
+        // On submit function
+        //function load_submit() {
+        $('document').ready(function() {
+            console.log("Document is now ready!");
+            button_start();
+            // Might error if API hasn't started!
+            $('#load_form').submit(function(e) {
+                    //$('#load_form').preventDefault();
+                    e.preventDefault(); // Prevent refresh
+                    stopLoop();
+                    var in_id = $('#in_form').val();
+                    vid_id = in_id;
+                    clear_markers();
+                    // Clear loops if different vid
+                    if(player) { load_video(vid_id); }
+                    return;
+            });
+        });
+
+        function load_video(my_id) {
+            console.log("Loading video: ");
+            console.log(my_id);
+            player.loadVideoById(my_id);
+            //vid_time = player.getDuration();
+            //console.log(vid_time);
+            return;
+        }
+        
+        function clear_markers() {
+            //$('.marker').empty();
+            button_start();
+            return;
+        }
+        
+        // ~~~~~~~~~~ Loop Button ~~~~~~~~~~
+
+        // Button behaviour
+        function buttonClick() {
+            console.log("Button clicked!");
+            //var elem = document.getElementById("myButton");
+            //var elem = button;
+            //console.log(elem.textContent);
+            console.log($("#myButton").data("state"));
+            switch ($("#myButton").data("state")) {
+                case "start": //Set start to set end
+                    button_end();
+                    break;
+                case "end": //set end to loop
+                    button_break();
+                    break;
+                case "break":  //loop to set start
+                    button_start();
+                    break;
+                default:
+                    return;
+            }
+            return;
+        }
+        
+        // Reset button
+        function button_start() {
+            // Set up markers
+            $('.marker').empty();
+            $(".marker").css('color', colors[curr_loop-1]);
+            $("#myButton").data("state", "start");
+            stopLoop();
+            $("#myButton").text("Set loop start");
+            return;
+        }
+        
+        // Set start, wait for end
+        function button_end() {
+            $("#myButton").data("state", "end");
+            setStart();
+            $("#myButton").text("Set loop end");
+            return;
+        }
+        
+        // Set end, wait for break
+        function button_break() {
+            // Check to make sure is diff from begining?
+            $("#myButton").data("state", "break");
+            setEnd();
+            goLoop();
+            $("#myButton").text("Break loop");
+            return;
+        }
+
+        
+        // ~~~~~~~~~~ Looping Functions ~~~~~~~~~~
+        
+        // Set start and stop times
+        function setStart() {
+            // Sets time to repeat to (marker A)
+            // Maybe should autostart?
+            console.log("Setting start time!");
+            gotoTime = Math.floor(player.getCurrentTime());
+            console.log(gotoTime);
+            // Update marker A
+            update_a(gotoTime);
+            //$('#startTime').html("Start marker set to: " + gotoTime + " seconds.")
+        }
+
+        function setEnd() {
+            // Sets time to repeat at (marker B)
+            console.log("Setting end time!");
+            endTime = Math.ceil(player.getCurrentTime());
+            console.log(endTime);
+            // Update marker B
+            update_b(endTime);
+            //$('#endTime').html("End marker set to: " + endTime + " seconds.")
+            make_new_loop();
+            //$("#marker_a_"+curr_marker).data("loop", {num: curr_marker, start: gotoTime, end: endTime, type: "A"});
+        }
+
+        // Control looping
+        function goLoop() {
+            // Goes to set time (marker A)
+            console.log("Going to time!");
+            console.log(gotoTime);
+            // Might be some cases where second argument should be false (faster)
+            // There might exist a faster option than seekTo
+            player.seekTo(gotoTime, true);
+            amLooping = true;  // Any time when this isn't so?
+        }
+
+        function stopLoop() {
+            console.log("Breaking loop!");
+            amLooping = false;
+            // Jump to end time?
+            gotoTime = 0;
+            endTime = vid_time;
+            var elem = document.getElementById("myButton");
+            elem.textContent = "Set loop start";
+            return;
+        }
+        
+        function gotoLoop(loop_data) {
+            if($("#myButton").data("state") == "end") {
+                // Possibly change this behaviour, maybe erase A
+                console.log("You must set an end to your current loop first!");
+                return;
+            }
+            stopLoop();
+            gotoTime = loop_data.start;
+            endTime = loop_data.end;
+            goLoop();
+            // Set curr_marker? - somehow indicate loop
+            // Update button
+            $("#myButton").data("state", "break");
+            $("#myButton").text("Break loop");
+            // Update markers
+            $(".marker").css('color', colors[loop_data.num-1]);
+            update_a(loop_data.start);
+            update_b(loop_data.end);
+            return;
+        }
+        /*
+        function gotoEnd(loop_data) {
+            if($("#myButton").data("state") == "end") {
+                // Possibly change this behaviour, maybe erase A
+                console.log("You must set an end to your current loop first!");
+                return;
+            }
+            stopLoop();
+            player.seekTo(loop_data.end, true);
+            return;
+        }*/
+            
+        // Control markers / loops
+        function make_new_loop() {
+            // Finalizes loop
+            // Create divs
+            $("#loops_col").append( '<div id="loop_'+curr_loop+'" class="loop"></div>' );   // Maybe need to do something about id
+            // Set color
+            $("#loop_"+curr_loop).css('color', colors[curr_loop-1]);
+            // Set data
+            $("#loop_"+curr_loop).data("loop", {num: curr_loop, start: gotoTime, end: endTime, name: "loop_"+curr_loop});
+            // Set display
+            $("#loop_"+curr_loop).html(sec_to_min(gotoTime) + " - " + sec_to_min(endTime) + " --- loop_"+curr_loop);
+            // Update vid_left (may have shifted)
+            vid_left = $('#player').offset().left;
+            
+            // Any way to apply this pre-emptively to class once?
+            $("#loop_"+curr_loop).click(function() {
+                console.log($(this).data("loop"));
+                gotoLoop($(this).data("loop"));
+                return;
+            });
+            
+            // Maybe have button to go to end of loop
+            
+            // Update curr_marker
+            curr_loop += 1;
+            console.log("curr_loop set to: "+curr_loop);
+            return;
+        }
+
+        // Update graphical markers (pass in -1 to clear?)
+        function update_a(set_time) {
+            // current sets left where centre should maybe be
+            var ratio = set_time / vid_time;
+            var pos = vid_left + Math.floor(vid_width * ratio);
+            // Make time pretty
+            $('#marker_a').html(sec_to_min(set_time));
+            $('#marker_a').offset({left: pos});
+            return;
+        }
+
+        function update_b(set_time) {
+            // current sets left where centre should maybe be
+            var ratio = set_time / vid_time;
+            var pos = vid_left + Math.floor(vid_width * ratio);
+            $('#marker_b').html(sec_to_min(set_time));
+            $('#marker_b').offset({left: pos});//, top: 0});
+
+            var left_pos = $('#marker_a').offset().left;
+            return;
+        }
+        
+    </script>
+  </body>
+</html>
