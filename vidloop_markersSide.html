@@ -3,7 +3,7 @@
 <head>
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
 <style>
-button{
+#myButton{
     font-size: 50px;
     padding: 10px;
 }
@@ -69,7 +69,11 @@ button{
 		<!-- Centre this bellow the video -->
 		<button id="myButton" class="rel_center" onclick="buttonClick()">Set loop start</button>
 	</div>
-    <div id="current_loop" class="abs_center">
+    <br>
+    <div id="name_div" class="abs_center">
+        <div id="current_loop" class="rel_center"></div>
+        <br>
+        <button id="name_button" class="rel_center" onclick="name_button_click()">Change name</button>
     </div>
 
     <script>
@@ -114,7 +118,8 @@ button{
         var amLooping = false; 	    // Whether video is currently looping - might want to get rid of this var
         var gotoTime = 0;			// Sets time for start of loop, floor
         var endTime = 9001;  		// Sets time for end of loop, ceil
-        var curr_loop = 1;        // Current marker being worked with
+        var loaded_loop = 0;        // Loop that is currently loaded - better default?
+        var curr_loop = 1;          // Current marker being worked with
         var colors = ['red', 'green', 'blue', 'black', 'black', 'black', 'black', 'black'];  // Marker colors - better way to do?
 
         // Video properties
@@ -160,7 +165,7 @@ button{
             console.log("Video is now ready!");
             setup_time();
             vid_left = $('#player').offset().left;
-            console.log(vid_left);
+            console.log("vid_left: " + vid_left);
             $('#markers').width(vid_width)
             // Set up time keeping function
             function updateTime() {
@@ -228,8 +233,7 @@ button{
         function setup_time() {
             // Set properties
             vid_time = player.getDuration();
-            console.log("total time set to:");
-            console.log(vid_time);
+            console.log("total time set to: " + vid_time);
             // Set to video end time and set loop to true
             endTime = Math.ceil(vid_time);  // Shouldn't need ceil, but just in case...
             amLooping = true;
@@ -258,8 +262,7 @@ button{
         });
 
         function load_video(my_id) {
-            console.log("Loading video: ");
-            console.log(my_id);
+            console.log("Loading video: " + my_id);
             player.loadVideoById(my_id);
             //vid_time = player.getDuration();
             //console.log(vid_time);
@@ -278,11 +281,10 @@ button{
 
         // Button behaviour
         function buttonClick() {
-            console.log("Button clicked!");
+            console.log("Button clicked! Current state: " + $("#myButton").data("state"));
             //var elem = document.getElementById("myButton");
             //var elem = button;
             //console.log(elem.textContent);
-            console.log($("#myButton").data("state"));
             switch ($("#myButton").data("state")) {
                 case "start": //Set start to set end
                     button_end();
@@ -312,6 +314,7 @@ button{
             $("#myButton").text("Set loop start");
             $("#current_loop").html("Current loop: None");
             $("#current_loop").css('color', 'black');
+            loaded_loop = 0;
             return;
         }
         
@@ -325,11 +328,16 @@ button{
         
         // Set end, wait for break
         function button_break() {
-            // Check to make sure is diff from begining?
+            // Check to make sure is diff from begining - this check should never be true
+            var curr_time = Math.ceil(player.getCurrentTime());
+            if(curr_time <= gotoTime) {
+                alert("Second marker must come AFTER the first");
+                return;
+            }
             $("#myButton").data("state", "break");
-            setEnd(Math.ceil(player.getCurrentTime()));
-            goLoop();
             $("#myButton").text("Break loop");
+            setEnd(curr_time);
+            goLoop();
             return;
         }
 
@@ -341,8 +349,7 @@ button{
             // Sets time to repeat to (marker A)
             // Maybe should autostart?
             gotoTime=in_time;
-            console.log("Setting start time!");
-            console.log(gotoTime);
+            console.log("Setting start time: " + gotoTime);
             // Update marker A
             update_a(in_time);
             $("#current_loop").html("Current loop: loop_"+curr_loop);
@@ -351,9 +358,8 @@ button{
 
         function setEnd(in_time) {
             // Sets time to repeat at (marker B)
-            console.log("Setting end time!");
+            console.log("Setting end time: " + endTime);
             endTime = in_time;
-            console.log(endTime);
             // Update marker B
             update_b(in_time);
             make_new_loop();
@@ -362,8 +368,7 @@ button{
         // Control looping
         function goLoop() {
             // Goes to set time (marker A)
-            console.log("Going to time!");
-            console.log(gotoTime);
+            console.log("Going to time: " + gotoTime);
             // Might be some cases where second argument should be false (faster)
             // There might exist a faster option than seekTo
             player.seekTo(gotoTime, true);
@@ -376,7 +381,7 @@ button{
         function gotoLoop(loop_data) {
             if($("#myButton").data("state") == "end") {
                 // Possibly change this behaviour, maybe erase A
-                console.log("You must set an end to your current loop first!");
+                alert("You must set an end to your current loop first!");
                 return;
             }
             button_reset();
@@ -412,6 +417,7 @@ button{
         // Saving new loop
         function make_new_loop() {
             // Finalizes loop
+            loaded_loop = "#loop_"+curr_loop;
             // Create divs
             $("#loops_col").append( '<div id="loop_'+curr_loop+'" class="loop"></div>' );   // Maybe need to do something about id
             // Set color
@@ -425,6 +431,8 @@ button{
             $("#loop_"+curr_loop).click(function() {
                 console.log($(this).data("loop"));
                 gotoLoop($(this).data("loop"));
+                loaded_loop = $(this).attr('id');
+                console.log("Loaded in loop: " + loaded_loop);
                 return;
             });
             
@@ -455,6 +463,21 @@ button{
             $('#marker_b').offset({left: pos});//, top: 0});
 
             var left_pos = $('#marker_a').offset().left;
+            return;
+        }
+        
+        function name_button_click() {
+        // Change prompt to something non-intrusive
+            console.log("rename button clicked");
+            var new_name = prompt("Please enter a name for the loop:", $('#'+loaded_loop).data("loop").name); //loaded_loop);
+            if(new_name != null) {
+                // Update name
+                $('#'+loaded_loop).data("loop").name = new_name;
+                console.log("Name of " + loaded_loop + " now set to: " + $('#'+loaded_loop).data("loop").name);
+                // Update representations
+                $('#'+loaded_loop).html(sec_to_min(gotoTime) + " - " + sec_to_min(endTime) + " --- "+new_name);
+                $("#current_loop").html("Current loop: " + new_name);
+            }
             return;
         }
         
