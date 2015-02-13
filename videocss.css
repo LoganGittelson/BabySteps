@@ -1,0 +1,39 @@
+body
+{
+margin:0;
+padding:0;
+}
+
+
+#load_in{
+background-color:#274882;
+width:100%;
+padding:25px;
+border-bottom: solid 3px;
+
+}
+
+.marker{
+font-size:.8em;
+}
+
+#form{
+border-style: solid;
+border-width: 2px;
+padding:3px;
+color:white;
+font-size:20px;
+}
+
+#bar{
+height:.8em;
+background:#7CBAEB;
+display:block;
+}
+
+
+button{
+background-color:#274882;
+font-size:35px;
+color:white;
+}
