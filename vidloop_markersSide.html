@@ -69,6 +69,8 @@ button{
 		<!-- Centre this bellow the video -->
 		<button id="myButton" class="rel_center" onclick="buttonClick()">Set loop start</button>
 	</div>
+    <div id="current_loop" class="abs_center">
+    </div>
 
     <script>
 	// Wrap all in $document.ready - breaks it, idk why
@@ -200,7 +202,7 @@ button{
             // Breaks loop when out of times
             if(Math.floor(VT) > endTime || Math.ceil(VT) < gotoTime){
                 console.log("You have seeked outside of loop");
-                button_start();
+                button_reset();
             }
             // Loops at end of video - change to event detect instead
             if(VT == vid_time) {
@@ -235,16 +237,16 @@ button{
         //function load_submit() {
         $('document').ready(function() {
             console.log("Document is now ready!");
-            button_start();
+            button_reset();
             // Might error if API hasn't started!
             $('#load_form').submit(function(e) {
                     //$('#load_form').preventDefault();
                     e.preventDefault(); // Prevent refresh
-                    stopLoop();
+                    button_reset();
                     var in_id = $('#in_form').val();
                     vid_id = in_id;
+                    // Clear loops (if different vid?)
                     clear_markers();
-                    // Clear loops if different vid
                     if(player) { load_video(vid_id); }
                     return;
             });
@@ -260,8 +262,10 @@ button{
         }
         
         function clear_markers() {
-            //$('.marker').empty();
-            button_start();
+            $('.marker').empty();
+            $('.loop').remove();
+            curr_loop = 1;  // Might have to change for instrumentation
+            button_reset();
             return;
         }
         
@@ -282,7 +286,7 @@ button{
                     button_break();
                     break;
                 case "break":  //loop to set start
-                    button_start();
+                    button_reset();
                     break;
                 default:
                     return;
@@ -291,20 +295,24 @@ button{
         }
         
         // Reset button
-        function button_start() {
-            // Set up markers
+        function button_reset() {
+            console.log("Breaking loop!");
+            amLooping = false;
+            // Jump to end time?
+            gotoTime = 0;
+            endTime = vid_time;
             $('.marker').empty();
             $(".marker").css('color', colors[curr_loop-1]);
             $("#myButton").data("state", "start");
-            stopLoop();
             $("#myButton").text("Set loop start");
+            $("#current_loop").html("Current loop: None");
             return;
         }
         
         // Set start, wait for end
         function button_end() {
             $("#myButton").data("state", "end");
-            setStart();
+            setStart(Math.floor(player.getCurrentTime()));
             $("#myButton").text("Set loop end");
             return;
         }
@@ -313,7 +321,7 @@ button{
         function button_break() {
             // Check to make sure is diff from begining?
             $("#myButton").data("state", "break");
-            setEnd();
+            setEnd(Math.ceil(player.getCurrentTime()));
             goLoop();
             $("#myButton").text("Break loop");
             return;
@@ -323,28 +331,26 @@ button{
         // ~~~~~~~~~~ Looping Functions ~~~~~~~~~~
         
         // Set start and stop times
-        function setStart() {
+        function setStart(in_time) {
             // Sets time to repeat to (marker A)
             // Maybe should autostart?
+            gotoTime=in_time;
             console.log("Setting start time!");
-            gotoTime = Math.floor(player.getCurrentTime());
             console.log(gotoTime);
             // Update marker A
-            update_a(gotoTime);
-            //$('#startTime').html("Start marker set to: " + gotoTime + " seconds.")
+            update_a(in_time);
+            $("#current_loop").html("Current loop: loop_"+curr_loop);
         }
 
-        function setEnd() {
+        function setEnd(in_time) {
             // Sets time to repeat at (marker B)
             console.log("Setting end time!");
-            endTime = Math.ceil(player.getCurrentTime());
+            endTime = in_time;
             console.log(endTime);
             // Update marker B
-            update_b(endTime);
-            //$('#endTime').html("End marker set to: " + endTime + " seconds.")
+            update_b(in_time);
             make_new_loop();
-            //$("#marker_a_"+curr_marker).data("loop", {num: curr_marker, start: gotoTime, end: endTime, type: "A"});
-        }
+            }
 
         // Control looping
         function goLoop() {
@@ -357,24 +363,16 @@ button{
             amLooping = true;  // Any time when this isn't so?
         }
 
-        function stopLoop() {
-            console.log("Breaking loop!");
-            amLooping = false;
-            // Jump to end time?
-            gotoTime = 0;
-            endTime = vid_time;
-            var elem = document.getElementById("myButton");
-            elem.textContent = "Set loop start";
-            return;
-        }
+        //stopLoop is now button_reset
         
+        // Runs on loop representation's click (loop load)
         function gotoLoop(loop_data) {
             if($("#myButton").data("state") == "end") {
                 // Possibly change this behaviour, maybe erase A
                 console.log("You must set an end to your current loop first!");
                 return;
             }
-            stopLoop();
+            button_reset();
             gotoTime = loop_data.start;
             endTime = loop_data.end;
             goLoop();
@@ -386,6 +384,8 @@ button{
             $(".marker").css('color', colors[loop_data.num-1]);
             update_a(loop_data.start);
             update_b(loop_data.end);
+            // Update current loop
+            $("#current_loop").html("Current loop: " + loop_data.name);
             return;
         }
         /*
@@ -401,6 +401,7 @@ button{
         }*/
             
         // Control markers / loops
+        // Saving new loop
         function make_new_loop() {
             // Finalizes loop
             // Create divs
@@ -411,8 +412,6 @@ button{
             $("#loop_"+curr_loop).data("loop", {num: curr_loop, start: gotoTime, end: endTime, name: "loop_"+curr_loop});
             // Set display
             $("#loop_"+curr_loop).html(sec_to_min(gotoTime) + " - " + sec_to_min(endTime) + " --- loop_"+curr_loop);
-            // Update vid_left (may have shifted)
-            vid_left = $('#player').offset().left;
             
             // Any way to apply this pre-emptively to class once?
             $("#loop_"+curr_loop).click(function() {
