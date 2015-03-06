@@ -1,8 +1,11 @@
+
+
 <!DOCTYPE html>
 <html>
 <head>
+
 <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-<link rel="stylesheet" type="text/css" href="videocss.css">
+<link rel="stylesheet" type="text/css" href="videocss3.css">
 <link href='http://fonts.googleapis.com/css?family=Khula' rel='stylesheet' type='text/css'>
 <style>
 .abs_center{
@@ -27,8 +30,8 @@
 		</form>
 	</div>
 	<br>
-	<br>
 
+<br>
 <div id="container">
     <div id="loops_col">
         <div id="saved_loops">Saved Loops</div>
@@ -49,7 +52,7 @@
 		<br>
 		<!-- Centre this bellow the video -->
 		<div id="current_loop" class="rel_center"></div>
-		
+		 
 		<button id="myButton"  onclick="buttonClick()">Set loop start</button>
 		
 	</div>
@@ -59,11 +62,12 @@
         <br>
         <button id="name_button" class="rel_center" onclick="name_button_click()">Change name</button>
     </div>
-    
- </div>   
+</div>      
+ 
 
 
     <script>
+  
 	// Wrap all in $document.ready - breaks it, idk why
 	  // Logan Gittelson
 	  // For BabySteps (2015)
@@ -143,6 +147,7 @@
                 'onStateChange': onPlayerStateChange
                 // Add on error catch
               }
+              
             });
         }
       
@@ -176,6 +181,11 @@
             if (event.data == -1) {
                 console.log("new video detected");
                 setup_time();
+            }
+            
+              if (event.data == 0) {
+              setTimeout(function () {
+                player.seekTo(0);}, 3000);
             }
             return;
         }
@@ -302,6 +312,10 @@
             $("#current_loop").html("Current loop: None");
             $("#current_loop").css('color', 'black');
             $("#name_button").hide();
+////////////not working, need to have loop name back to normal font weight
+            console.log("Check: #loop_"+curr_loop);
+            $("#loop_"+(curr_loop-1)).css('font-weight', '300');
+            $("name_change").remove();
             $('#bar').css('width', '0px');
             loaded_loop = 0;
             return;
@@ -374,6 +388,7 @@
                 alert("You must set an end to your current loop first!");
                 return;
             }
+            
             button_reset();
             gotoTime = loop_data.start;
             endTime = loop_data.end;
@@ -389,6 +404,7 @@
             // Update current loop
             $("#current_loop").html("Current loop: " + loop_data.name);
             $("#current_loop").css('color', colors[loop_data.num-1]);
+            $("#bar").css('background-color', colors[loop_data.num-1]);
             $("#name_button").show();
             return;
         }
@@ -410,14 +426,21 @@
             // Finalizes loop
             loaded_loop = "loop_"+curr_loop;  // Can only change name after end of loop is set! - maybe hide button
             // Create divs
+
             $("#loops_col").append( '<div id="loop_'+curr_loop+'" class="loop"></div>' );   // Maybe need to do something about id
             // Set color
             $("#loop_"+curr_loop).css('color', colors[curr_loop-1]);
+            // Set to bold to indicate this is the loop you are in 
+             $("#loop_"+curr_loop).css('font-weight', '900');
+
             // Set data
             $("#loop_"+curr_loop).data("loop", {num: curr_loop, start: gotoTime, end: endTime, name: "loop_"+curr_loop});
             // Set display
-            $("#loop_"+curr_loop).html("<a>"+sec_to_min(gotoTime) + " - " + sec_to_min(endTime) + "  Loop"+curr_loop+"</a>");
+            var namedelete="loop_"+curr_loop;
+            $("#loop_"+curr_loop).html("<span id='delete_loop' onclick='delete_loop("+namedelete+")'>&#10006; </span><a>  "+sec_to_min(gotoTime) + " - " + sec_to_min(endTime) + "   Loop"+curr_loop+"</a>");
+           // Change name
             $("#name_button").show();
+        
             
             // Any way to apply this pre-emptively to class once?
             $("#loop_"+curr_loop).click(function() {
@@ -435,7 +458,14 @@
             console.log("curr_loop set to: "+curr_loop);
             return;
         }
-
+        
+        
+        //delete a saved loop
+        function delete_loop(name_delete){
+      	 $(name_delete).remove();
+        
+        }
+        
         // Update graphical markers (pass in -1 to clear?)
         function update_a(set_time) {
             // current sets left where centre should maybe be
@@ -443,7 +473,7 @@
             var pos = vid_left + Math.floor(vid_width * ratio);
             // Make time pretty
             $('#marker_a').html(sec_to_min(set_time));
-            $('#marker_a').offset({left: pos-20});    //-20 to align it right
+            $('#marker_a').offset({left: pos-25});    //-25 to align it right
       //bar maker
 			$('#bar').offset({left: pos});
 			$('#bar').css('width', '2px');
@@ -456,7 +486,7 @@
             var ratio = set_time / vid_time;
             var pos = vid_left + Math.floor(vid_width * ratio);
             $('#marker_b').html(sec_to_min(set_time));
-            $('#marker_b').offset({left: pos});//, top: 0});
+            $('#marker_b').offset({left: pos+5});//, top: 0});
 			
 			
             var left_pos = $('#marker_a').offset().left+20;   //+20 because the marker a is pos-20
