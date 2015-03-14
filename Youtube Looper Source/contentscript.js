@@ -26,7 +26,7 @@
 /*
  * QUICK FIND
  *
- * button defined - thebuttons
+ * button defined - thebuttons - two percent signs
  * definition of logandiv - theloops
  *
  *
@@ -1271,7 +1271,7 @@ ytl = {
 		}
         
         // L: Add functions to appropriately switch buttons ~~~~~~~~~~~~~~~~~~~~***************~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        // thebuttons
+        // thebuttons - %%
         function updateButton (){
             var bstate = ytl.getVariable('buttonState');
 			// clear button container
@@ -1328,7 +1328,7 @@ ytl = {
             ytl.session['loop-num'] = Number(ytl.session['loop-num']) + 1;
             var myloop = document.createElement('div');
             myloop.id = 'loop-'+loopnum;
-            myloop.innerText = 'loop #'+loopnum;
+            myloop.innerText = 'Loop #'+loopnum+': '+ytl.getTime(ytl.getVariable('starttime'))+' - '+ytl.getTime(ytl.getVariable('endtime'));
             myloop.dataset.starttime = ytl.getVariable('starttime');
             myloop.dataset.endtime = ytl.getVariable('endtime');
             // add info from getTime
@@ -2125,7 +2125,8 @@ ytl = {
 		ytl.replaceUrlVar('timer', ytl.checkIf('intimer') ? ytl.getVariable('loopTimer') : null);
 		
 		if (ytl.checkIf('playlistExist')) {
-			if(document.getElementById('loop-panel-end-container')) document.getElementById('loop-panel-end-container').style.display = 'inline-block';
+			// L: Will hide playlist stuff
+			if(document.getElementById('loop-panel-end-container')) document.getElementById('loop-panel-end-container').style.display = 'inline-block';  // L: Setting to none makes playlist weird
 			if (ytl.checkIf('playlist-endplay') || ytl.checkIf('playlist-endplayPrevious')) {
 				if(document.getElementById('loop-playlist-end-play')) document.getElementById('loop-playlist-end-play').click();
 			} else {
