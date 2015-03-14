@@ -1,0 +1,42 @@
+/*
+ * Looper for YouTube
+ * http://looperforyoutube.alvinhkh.com
+ * Copyright (c) 2011-2015, AlvinHKH
+ * http://alvinhkh.com
+ * All rights reserved.
+ */
+
+.watch-full:not(.watch-small) #theater-background {
+	height: calc(92vh - 30px) !important;
+}
+.site-center-aligned #player.watch-full:not(.watch-small), #player.watch-full:not(.watch-small) {
+	width: 100% !important;
+}
+.watch-full:not(.watch-small) .player-height {
+	height: 92vh !important;
+	height: -webkit-calc(92vh - 40px) !important;
+	height: calc(92vh - 40px) !important;
+}
+.watch-full:not(.watch-small) .player-width {
+	width: 100% !important;
+}
+.watch-full:not(.watch-small) .html5-video-container {
+	margin: 0 auto;
+}
+.watch-full:not(.watch-small) .html5-video-content {
+	width: 100% !important;
+	height: 100% !important;
+}
+.watch-full:not(.watch-small) .html5-video-player .video-stream {
+	width: initial !important;
+	max-width: 100% !important;
+	height: 100% !important;
+	left: 0 !important;
+	right: 0 !important;
+	top: 0 !important;
+	bottom: 0 !important;
+	margin: 0 auto;
+}
+.watch-small .video-annotations.iv-module {
+	-webkit-transform: initial !important;
+}
