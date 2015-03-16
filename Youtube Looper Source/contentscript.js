@@ -28,7 +28,7 @@
  *
  * button defined - thebuttons - two percent signs
  * definition of logandiv - theloops
- *
+ * loopaction which is called on player state change - [[
  *
  */
 
@@ -1873,9 +1873,13 @@ ytl = {
 		}, 60000);
 	},
 
+    // L: This is called on player state change - [[
 	loopAction: function (s) {
 		clearTimeout(ytl.manualChecker);
 		clearTimeout(ytl.playAction);
+        
+        // L: Testing state changing
+        console.log('The state has changed');
 		
 		if (s!=undefined) ytl.session['yt-loop-attached'] = true;
 		if ( ytl.getVariable('endtime') == '0' || ytl.getVariable('endtime') == 'false' || (ytl.getVariable('endtime') == ytl.session['yt-duration'] && Number(ytl.session['yt-duration']) != ytl.getVariable('duration')) ) {
@@ -2017,6 +2021,7 @@ ytl = {
 				}
 				ytl.player.removeEventListener('onPlaybackQualityChange', ytl.onPlaybackQualityChange, false);
 				ytl.player.addEventListener('onPlaybackQualityChange', ytl.onPlaybackQualityChange, false);
+                // L: This is where the state change event listener is set up
 				ytl.player.removeEventListener('onStateChange', ytl.loopAction, false);
 				ytl.player.addEventListener('onStateChange', ytl.loopAction, false);
 				clearInterval(ytl.doubleChecker);
