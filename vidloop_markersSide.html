@@ -7,7 +7,6 @@
     font-size: 50px;
     padding: 10px;
 }
-
 .abs_center{
     margin-left: auto;
     margin-right: auto;
@@ -15,7 +14,6 @@
 	text-align: center;
     /*background-color: #b0e0e6;*/
 }
-
 .rel_center{
 	display: inline-block;
     /*width: 50%;
@@ -23,26 +21,19 @@
 	/* background-color: #e0e0e6; */
 	text-align: left;
 }
-
 .rel_left{
     text-align: left;
     float: left;
     z-index: -1;
 }
-
 /* first marker moves when second one is set, must change. Also need to make pretty */
-
-
 .marker{
 	/*position: absolute;
 	background-color: #e0e0e6;*/
-
 }
-
 .loop{
     /* background-color: #e0e0e6; */
 }
-
 </style>
 </head>
   <body>
@@ -113,7 +104,6 @@
         // Time keeping
         var videotime = 0;  	  	// Checked time
         var timeupdater = null;	    // Used for updating time
-
         // Loop control
         var amLooping = false; 	    // Whether video is currently looping - might want to get rid of this var
         var gotoTime = 0;			// Sets time for start of loop, floor
@@ -121,7 +111,6 @@
         var loaded_loop = 0;        // Loop that is currently loaded - better default?
         var curr_loop = 1;          // Current marker being worked with
         var colors = ['red', 'green', 'blue', 'black', 'black', 'black', 'black', 'black'];  // Marker colors - better way to do?
-
         // Video properties
         var vid_height = 390;		// Height of video	default: 390
         var vid_width = 640;  	    // Width of video	default: 640
@@ -131,14 +120,11 @@
         // Google dev: 'M7lc1UVf-VE'
         // Origami crane: 'Ux1ECrNDZl4'
         // Valentine: 'eMFJdHJ92nw'
-
         // This code loads the IFrame Player API code asynchronously.
         var tag = document.createElement('script');
-
         tag.src = "https://www.youtube.com/iframe_api";
         var firstScriptTag = document.getElementsByTagName('script')[0];
         firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
         // This function creates an <iframe> (and YouTube player)
         //    after the API code downloads.
         var player;
@@ -229,7 +215,6 @@
             if (my_secs < 10) { ret_time = my_mins + ':0' + my_secs; }
             return ret_time;
         }
-
         function setup_time() {
             // Set properties
             vid_time = player.getDuration();
@@ -260,7 +245,6 @@
                     return;
             });
         });
-
         function load_video(my_id) {
             console.log("Loading video: " + my_id);
             player.loadVideoById(my_id);
@@ -278,7 +262,6 @@
         }
         
         // ~~~~~~~~~~ Loop Button ~~~~~~~~~~
-
         // Button behaviour
         function buttonClick() {
             console.log("Button clicked! Current state: " + $("#myButton").data("state"));
@@ -341,7 +324,6 @@
             goLoop();
             return;
         }
-
         
         // ~~~~~~~~~~ Looping Functions ~~~~~~~~~~
         
@@ -356,7 +338,6 @@
             $("#current_loop").html("Current loop: loop_"+curr_loop);
             $("#current_loop").css('color', colors[curr_loop-1]);
         }
-
         function setEnd(in_time) {
             // Sets time to repeat at (marker B)
             console.log("Setting end time: " + endTime);
@@ -365,7 +346,6 @@
             update_b(in_time);
             make_new_loop();
             }
-
         // Control looping
         function goLoop() {
             // Goes to set time (marker A)
@@ -375,7 +355,6 @@
             player.seekTo(gotoTime, true);
             amLooping = true;  // Any time when this isn't so?
         }
-
         //stopLoop is now button_reset
         
         // Runs on loop representation's click (loop load)
@@ -446,7 +425,6 @@
             console.log("curr_loop set to: "+curr_loop);
             return;
         }
-
         // Update graphical markers (pass in -1 to clear?)
         function update_a(set_time) {
             // current sets left where centre should maybe be
@@ -457,14 +435,12 @@
             $('#marker_a').offset({left: pos});
             return;
         }
-
         function update_b(set_time) {
             // current sets left where centre should maybe be
             var ratio = set_time / vid_time;
             var pos = vid_left + Math.floor(vid_width * ratio);
             $('#marker_b').html(sec_to_min(set_time));
             $('#marker_b').offset({left: pos});//, top: 0});
-
             var left_pos = $('#marker_a').offset().left;
             return;
         }
