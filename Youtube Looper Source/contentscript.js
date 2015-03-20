@@ -144,6 +144,7 @@ ytl = {
 		ytl.playAction = null;
 		ytl.manualChecker = null;
 		ytl.doubleChecker = null;
+        ytl.seekChecker = null;
 		
 		// Event Boolean
 		ytl.playlistAutoplayButtonManualClick = true;
@@ -2003,6 +2004,13 @@ ytl = {
 			}
 		}
 	},
+    
+    catchSeeks: function () {
+        // Check current time
+        // See if there's more than a second diff with previous time
+        // save current time as prev time
+        return;
+    },
 
 	onPlaybackQualityChange: function(e) {
 		ytl.log('onPlaybackQualityChange', e);
@@ -2026,6 +2034,9 @@ ytl = {
 				ytl.player.addEventListener('onStateChange', ytl.loopAction, false);
 				clearInterval(ytl.doubleChecker);
 				ytl.doubleChecker = setInterval(ytl.onStateChangeCheckAction, 2000);
+                // L: Added a function to check for seeks every second
+                clearInterval(ytl.seekChecker);
+                ytl.seekChecker = setInterval(ytl.catchSeeks, 1000);
 			} else {
 				ytl.log('NO REFERENCE PLAYER', '(Usually cause by using other youtube extensions at the same time)');
 				return;
