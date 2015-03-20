@@ -1327,7 +1327,6 @@ ytl = {
         function createLoopDiv() {
             // L: Save loop when it is broken, then clear
             // create div with an id
-            console.log('creating loop with loopnum: '+ytl.session['loop-num']);
             //console.log('creating loop with loopnum: '+ytl.session['loop-num']);
             var loopnum = ytl.session['loop-num'];
             ytl.session['loop-num'] = Number(ytl.session['loop-num']) + 1;
@@ -1338,8 +1337,6 @@ ytl = {
             myloop.dataset.endtime = ytl.getVariable('endtime');
             // add info from getTime
             // add a name
-            // append to logandiv
-            document.getElementById('logan-div').appendChild(myloop);
             // append to loopsdiv
             document.getElementById('loops-div').appendChild(myloop);
 			
