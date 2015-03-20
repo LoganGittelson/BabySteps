@@ -170,14 +170,18 @@ ytl = {
 		ytl.session['yt-loop-intimer'] = false;
 		ytl.session['yt-loop-inrange'] = false;
 		ytl.session['yt-loop-range'] = JSON.stringify([]);
-        // L: Loop num
-        ytl.session['loop-num'] = 0;
         
         // L: My variables
         // 0: set loop
         // 1: set end
         // 2: break loop
         ytl.session['yt-button-state'] = 0;
+        
+        // L: Loop num
+        ytl.session['loop-num'] = 0;
+        
+        // L: To help catch seeks
+        ytl.session['prev-time'] = 0;
 	},
 
 	/*
@@ -2025,7 +2029,7 @@ ytl = {
 	},
 
 	onStateChangeCheckAction: function () {
-		console.log("onStateChangeCheckAction was called");
+		// console.log("onStateChangeCheckAction was called");
 		if ( ytl.checkIf('inloop') ) {
 			if ( ytl.getVariable('currenttime') >= ytl.getVariable('endtime') - 1 && ytl.getVariable('playerstate') != -1 ) {
 				if (ytl.isDebug) ytl.log('force loopAction');
@@ -2034,7 +2038,20 @@ ytl = {
 		}
 	},
     
+    // L: setting up seek catch
+    // theseeks - ]]
     catchSeeks: function () {
+        var curr_time = Math.floor(ytl.getVariable('currenttime'));
+        var prev_time = Math.floor(Number(ytl.session['prev_time']));
+        if( curr_time > (prev_time + 2) )
+        {
+            console.log('forward seek detected from '+prev_time+' to ' +curr_time);
+        }
+        else if( curr_time < prev_time )
+        {
+            console.log('backwards seek detected from '+prev_time+' to ' +curr_time);
+        }
+        ytl.session['prev_time'] = ytl.getVariable('currenttime');
         // Check current time
         // See if there's more than a second diff with previous time
         // save current time as prev time
@@ -2077,15 +2094,14 @@ ytl = {
 				ytl.player.addEventListener('onStateChange', ytl.loopAction, false);
 				clearInterval(ytl.doubleChecker);
 				ytl.doubleChecker = setInterval(ytl.onStateChangeCheckAction, 2000);
-<<<<<<< HEAD
+                
                 // L: Added a function to check for seeks every second
                 clearInterval(ytl.seekChecker);
                 ytl.seekChecker = setInterval(ytl.catchSeeks, 1000);
-=======
 				// L: Adding my own event listener - may need to be outside this func?
 				ytl.player.removeEventListener('onStateChange', ytl.trackChange, false);
 				ytl.player.addEventListener('onStateChange', ytl.trackChange, false);
->>>>>>> origin/master
+                
 			} else {
 				ytl.log('NO REFERENCE PLAYER', '(Usually cause by using other youtube extensions at the same time)');
 				return;
