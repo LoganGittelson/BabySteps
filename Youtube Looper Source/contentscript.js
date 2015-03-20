@@ -20,6 +20,7 @@
   * Track search
   *
   *
+  * look at setInterval functions - how is loopaction called so often inside loops
   *
   */
   
@@ -27,7 +28,7 @@
  * QUICK FIND
  *
  * button defined - thebuttons - two percent signs
- * definition of logandiv - theloops
+ * definition of loopsdiv - theloops
  * loopaction which is called on player state change - [[
  *
  */
@@ -1273,6 +1274,7 @@ ytl = {
         
         // L: Add functions to appropriately switch buttons ~~~~~~~~~~~~~~~~~~~~***************~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         // thebuttons - %%
+		// Consider having this take in a var, maybe problems with async?
         function updateButton (){
             var bstate = ytl.getVariable('buttonState');
 			// clear button container
@@ -1297,6 +1299,7 @@ ytl = {
             e.stopPropagation();
             // Need a state variable, maybe in session?
             var bstate = ytl.getVariable('buttonState');
+			console.log("button press: " + bstate);
 			// 0, 1, 2
 			var nstate = (bstate+1) % 3;
 			// Check nstate
@@ -1325,6 +1328,7 @@ ytl = {
             // L: Save loop when it is broken, then clear
             // create div with an id
             console.log('creating loop with loopnum: '+ytl.session['loop-num']);
+            //console.log('creating loop with loopnum: '+ytl.session['loop-num']);
             var loopnum = ytl.session['loop-num'];
             ytl.session['loop-num'] = Number(ytl.session['loop-num']) + 1;
             var myloop = document.createElement('div');
@@ -1336,9 +1340,14 @@ ytl = {
             // add a name
             // append to logandiv
             document.getElementById('logan-div').appendChild(myloop);
+            // append to loopsdiv
+            document.getElementById('loops-div').appendChild(myloop);
+			
+			console.log(myloop.id+": "+myloop.dataset.starttime+" - "+myloop.dataset.endtime);
             
             //add event listener for when clicked
             myloop.addEventListener('click', function(e) {
+				console.log("loop clicked: " + myloop.id);
 				ytl.setVariable('starttime', myloop.dataset.starttime);
 				ytl.setVariable('endtime', myloop.dataset.endtime);
 				ytl.session['yt-button-state'] = 2;
@@ -1525,10 +1534,13 @@ ytl = {
 
 		// L: ADDING DIV for keeping track of loops
         // theloops
-		var loganDiv = document.createElement('div');
-		loganDiv.setAttribute('id', 'logan-div');
-		loganDiv.innerHTML = '<b>Hello this is logan div</b> <div id="logan-subdiv-1">a subdiv inside</div>';
-		p.parentNode.insertBefore(loganDiv, p);
+		if (document.getElementById('loops-div')) {
+			document.getElementById('loops-div').remove();
+		}
+		var loopsDiv = document.createElement('div');
+		loopsDiv.setAttribute('id', 'loops-div');
+		//loopsDiv.innerHTML = '<b>Hello this is logan div</b> <div id="logan-subdiv-1">a subdiv inside</div>';
+		p.parentNode.insertBefore(loopsDiv, p);
 
 		ytl.panel = document.getElementById('action-panel-loop');
 		ytl.slider = document.getElementById('loop-range-slider');
@@ -1867,6 +1879,7 @@ ytl = {
 					ytl.player.stopVideo();
 				} else {
 					ytl.player.pauseVideo();
+					console.log("seek at line 1877");
 					ytl.player.seekTo(ytl.getVariable('starttime'), false);
 				}
 				ytl.log('Looped - in timer');
@@ -1880,7 +1893,7 @@ ytl = {
 		clearTimeout(ytl.playAction);
         
         // L: Testing state changing
-        console.log('The state has changed');
+        //console.log('loopAction was called');
 		
 		if (s!=undefined) ytl.session['yt-loop-attached'] = true;
 		if ( ytl.getVariable('endtime') == '0' || ytl.getVariable('endtime') == 'false' || (ytl.getVariable('endtime') == ytl.session['yt-duration'] && Number(ytl.session['yt-duration']) != ytl.getVariable('duration')) ) {
@@ -1912,10 +1925,20 @@ ytl = {
 					) {
 						if(!(ytl.getVariable('starttime') >= ytl.getVariable('currenttime')))
 							ytl.session['yt-loop-th'] = ytl.getVariable('loopCounter')+1;
+					
+						// L: Loop when end of segment is reached. Triggers states 2, 3, 1 if simply playing to the end
+						// If user tried to seek outside of video, will trigger states 3, 1
+						if(ytl.getVariable('currenttime') > ytl.getVariable('endtime') - 0.1)
+						{ console.log("end of loop crossed"); }
+						else if(ytl.getVariable('starttime') > ytl.getVariable('currenttime') + 0.1)
+						{ console.log("start of loop crossed"); }
+					
+					
 						ytl.player.pauseVideo();
 						ytl.player.seekTo(ytl.getVariable('starttime'), true);
 						ytl.player.playVideo();
 						ytl.log('Looped - in range');
+						//console.log("auto loop end");
 					} else { 
 						// Loop in count
 						if (ytl.checkIf('playlistExist') && ytl.checkIf('playlist-endplay')) {
@@ -1924,6 +1947,7 @@ ytl = {
 							ytl.player.nextVideo();
 						} else {
 							ytl.player.pauseVideo();
+							console.log("seek at line 1936");
 							ytl.player.seekTo(ytl.getVariable('starttime'), true);
 						}
 						ytl.log('Looped - in range & count');
@@ -1938,7 +1962,9 @@ ytl = {
 						//ytl.player.stopVideo();
 						ytl.player.nextVideo();
 					} else {
+						//console.log("end of loop reached");
 						ytl.player.pauseVideo();
+						console.log("seek at line 1954");
 						ytl.player.seekTo(ytl.getVariable('starttime'), false);
 					}
 					ytl.log('Looped - in timer');
@@ -1953,9 +1979,12 @@ ytl = {
 					( ytl.checkIf('incount') && ytl.getVariable('loopCount') > ytl.getVariable('loopCounter') ) 
 				){
 					// Normal Loop
+					// L: Loop that happens at end of video, triggers states 1, 3, 1
+					console.log("full vid auto loop");
 					ytl.player.pauseVideo();
 					ytl.player.seekTo(0, true);
 					ytl.player.playVideo();
+					//console.log("full vid auto loop end");
 					ytl.playlistAutoPlayCheck();
 					ytl.session['yt-loop-th'] = ytl.getVariable('loopCounter')+1;
 					ytl.log('Looped - normal');
@@ -1975,12 +2004,14 @@ ytl = {
 			if ( s == -1 || ytl.getVariable('playerstate') == -1 ) {
 				ytl.log('playerstate -1');
 				//ytl.player.pauseVideo();
+				console.log("seek at line 1987");
 				ytl.player.seekTo(ytl.checkIf('check-usually') ? ytl.getVariable('starttime') : 0, true);
 				ytl.player.playVideo();
 			}
 			if ( ytl.getVariable('currenttime') == 0 && ytl.getVariable('playerstate') == 0 ) {
 				ytl.log('currenttime 0, playerstate 0');
 				ytl.player.stopVideo();
+				console.log("seek at line 1994");
 				ytl.player.seekTo(ytl.checkIf('check-usually') ? ytl.getVariable('starttime') : 0, true);
 				ytl.player.playVideo();
 			}
@@ -1997,6 +2028,7 @@ ytl = {
 	},
 
 	onStateChangeCheckAction: function () {
+		console.log("onStateChangeCheckAction was called");
 		if ( ytl.checkIf('inloop') ) {
 			if ( ytl.getVariable('currenttime') >= ytl.getVariable('endtime') - 1 && ytl.getVariable('playerstate') != -1 ) {
 				if (ytl.isDebug) ytl.log('force loopAction');
@@ -2014,6 +2046,20 @@ ytl = {
 
 	onPlaybackQualityChange: function(e) {
 		ytl.log('onPlaybackQualityChange', e);
+	},
+	
+	// L: My own function on state change
+	trackChange: function(yt_event) {
+		console.log("state changed: "+yt_event);
+		// 1 - play
+		// 2 - pause
+		// 3 - buffer (sometimes on seek?)
+		// autoloops look like 2, 3, 1 (pause, buffer, play)
+		// 3 returns on seek (buffer) - is other things too?
+		// seek looks like 3, 1 or 3, 2
+		// WON'T ALWAYS GET TRIGGERED ON SEEK
+		return;
+		
 	},
 
 	setLoopEvent: function () {
@@ -2034,9 +2080,15 @@ ytl = {
 				ytl.player.addEventListener('onStateChange', ytl.loopAction, false);
 				clearInterval(ytl.doubleChecker);
 				ytl.doubleChecker = setInterval(ytl.onStateChangeCheckAction, 2000);
+<<<<<<< HEAD
                 // L: Added a function to check for seeks every second
                 clearInterval(ytl.seekChecker);
                 ytl.seekChecker = setInterval(ytl.catchSeeks, 1000);
+=======
+				// L: Adding my own event listener - may need to be outside this func?
+				ytl.player.removeEventListener('onStateChange', ytl.trackChange, false);
+				ytl.player.addEventListener('onStateChange', ytl.trackChange, false);
+>>>>>>> origin/master
 			} else {
 				ytl.log('NO REFERENCE PLAYER', '(Usually cause by using other youtube extensions at the same time)');
 				return;
