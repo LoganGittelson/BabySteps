@@ -2094,14 +2094,22 @@ ytl = {
 				ytl.player.addEventListener('onStateChange', ytl.loopAction, false);
 				clearInterval(ytl.doubleChecker);
 				ytl.doubleChecker = setInterval(ytl.onStateChangeCheckAction, 2000);
+<<<<<<< HEAD
                 
+=======
+				
+>>>>>>> origin/master
                 // L: Added a function to check for seeks every second
                 clearInterval(ytl.seekChecker);
                 ytl.seekChecker = setInterval(ytl.catchSeeks, 1000);
 				// L: Adding my own event listener - may need to be outside this func?
 				ytl.player.removeEventListener('onStateChange', ytl.trackChange, false);
 				ytl.player.addEventListener('onStateChange', ytl.trackChange, false);
+<<<<<<< HEAD
                 
+=======
+				
+>>>>>>> origin/master
 			} else {
 				ytl.log('NO REFERENCE PLAYER', '(Usually cause by using other youtube extensions at the same time)');
 				return;
@@ -2247,6 +2255,7 @@ ytl = {
 	},
 	
 	buttonAction: function () {
+		console.log('panel button clicked');
 		if (ytl.getOption('showPanel') == false) ytl.panelDisplay(false);
 		if ( ytl.checkIf('playlist-queue') ) {
 			// Not working with google cast at this moment.
