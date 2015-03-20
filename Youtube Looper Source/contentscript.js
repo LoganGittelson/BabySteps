@@ -27,10 +27,11 @@
 /*
  * QUICK FIND
  *
- * button defined - thebuttons - two percent signs
+ * button defined - thebuttons - %%
  * definition of loopsdiv - theloops
  * loopaction which is called on player state change - [[
- *
+ * where seeking is kept track of - theseeks - ]]
+ * Where panel is set in the page (currently supper hacky) - thepage
  */
 
 var chromePage = "", 
@@ -1444,6 +1445,7 @@ ytl = {
 			document.getElementById('action-panel-loop').remove();
 		}
 		var content = document.createElement('div');
+		// L: This is where we set our panel in the page - thepage
 		var p = ytl.panelContainer.childNodes[4]; // SUPER hack -- the fourth child is the 'content' pane, which we want to insert the timeline before
 			content.setAttribute('id', 'action-panel-loop');
 			content.setAttribute('class', 'action-panel-content hid');
