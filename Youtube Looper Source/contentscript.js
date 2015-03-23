@@ -32,6 +32,8 @@
  * loopaction which is called on player state change - [[
  * where seeking is kept track of - theseeks - ]]
  * Where panel is set in the page (currently supper hacky) - thepage
+ * my on state change listener - trackchange
+ * segment loop - {{
  */
 
 var chromePage = "", 
@@ -154,6 +156,10 @@ ytl = {
 		ytl.setLoopEventloaded = false;
 		ytl.urlChecked = false;
 		ytl.windowResized = false;
+        // L: For printing to log
+        ytl.showState = false;
+        // Set to false to skip first seek done by player
+        ytl.showSeek = false;
 		
 		// Session Variables
 		ytl.session['yt-duration'] = 0;
@@ -1304,7 +1310,8 @@ ytl = {
             e.stopPropagation();
             // Need a state variable, maybe in session?
             var bstate = ytl.getVariable('buttonState');
-			console.log("button press: " + bstate);
+			// console.log("button press: " + bstate);
+            console.log("pressed '" + document.getElementById('set-buttons-div').children[bstate].value + "' @ "+ ytl.getVariable('currenttime'));
 			// 0, 1, 2
 			var nstate = (bstate+1) % 3;
 			// Check nstate
@@ -1897,6 +1904,7 @@ ytl = {
         
         // L: Testing state changing
         //console.log('loopAction was called');
+        //ytl.showState = true;
 		
 		if (s!=undefined) ytl.session['yt-loop-attached'] = true;
 		if ( ytl.getVariable('endtime') == '0' || ytl.getVariable('endtime') == 'false' || (ytl.getVariable('endtime') == ytl.session['yt-duration'] && Number(ytl.session['yt-duration']) != ytl.getVariable('duration')) ) {
@@ -1929,17 +1937,24 @@ ytl = {
 						if(!(ytl.getVariable('starttime') >= ytl.getVariable('currenttime')))
 							ytl.session['yt-loop-th'] = ytl.getVariable('loopCounter')+1;
 					
+                        // L: Segment loop - {{
 						// L: Loop when end of segment is reached. Triggers states 2, 3, 1 if simply playing to the end
 						// If user tried to seek outside of video, will trigger states 3, 1
-						if(ytl.getVariable('currenttime') > ytl.getVariable('endtime') - 0.1)
-						{ console.log("end of loop crossed"); }
+                        if(ytl.getVariable('currenttime') > ytl.getVariable('endtime') + 2)
+                        { console.log("user tried to seek forward out of loop"); }
+						else if(ytl.getVariable('currenttime') > ytl.getVariable('endtime') - 0.1)
+						{ }//console.log("end of loop crossed naturally"); }
 						else if(ytl.getVariable('starttime') > ytl.getVariable('currenttime') + 0.1)
-						{ console.log("start of loop crossed"); }
+						{ console.log("user tried to seek backwards out of loop"); }
 					
+                        // L: Turn off state printing, may be problem with async
+                        //ytl.showState = false;
+                        ytl.showSeek = false;
 					
-						ytl.player.pauseVideo();
+                        // L: Taking out manual pause and plays
+						//ytl.player.pauseVideo();
 						ytl.player.seekTo(ytl.getVariable('starttime'), true);
-						ytl.player.playVideo();
+						//ytl.player.playVideo();
 						ytl.log('Looped - in range');
 						//console.log("auto loop end");
 					} else { 
@@ -1983,10 +1998,14 @@ ytl = {
 				){
 					// Normal Loop
 					// L: Loop that happens at end of video, triggers states 1, 3, 1
+                    // L: Turn off state printing, may be problem with async
+                    //ytl.showState = false;
+                    ytl.showSeek = false;
 					console.log("full vid auto loop");
-					ytl.player.pauseVideo();
+                    // L: Taking out manual pause and plays
+					// ytl.player.pauseVideo();
 					ytl.player.seekTo(0, true);
-					ytl.player.playVideo();
+					// ytl.player.playVideo();
 					//console.log("full vid auto loop end");
 					ytl.playlistAutoPlayCheck();
 					ytl.session['yt-loop-th'] = ytl.getVariable('loopCounter')+1;
@@ -2043,16 +2062,20 @@ ytl = {
     // L: setting up seek catch
     // theseeks - ]]
     catchSeeks: function () {
+        // Careful of rounding here, especially for logging
         var curr_time = Math.floor(ytl.getVariable('currenttime'));
         var prev_time = Math.floor(Number(ytl.session['prev_time']));
-        if( curr_time > (prev_time + 2) )
+        if(ytl.showSeek)
         {
-            console.log('forward seek detected from '+prev_time+' to ' +curr_time);
-        }
-        else if( curr_time < prev_time )
-        {
-            console.log('backwards seek detected from '+prev_time+' to ' +curr_time);
-        }
+            if( curr_time > (prev_time + 1) )
+            {
+                console.log('forward seek detected from '+prev_time+' to ' +curr_time);
+            }
+            else if( curr_time < prev_time )
+            {
+                console.log('backwards seek detected from '+prev_time+' to ' +curr_time);
+            }
+        } else    {ytl.showSeek = true;}
         ytl.session['prev_time'] = ytl.getVariable('currenttime');
         // Check current time
         // See if there's more than a second diff with previous time
@@ -2066,7 +2089,17 @@ ytl = {
 	
 	// L: My own function on state change
 	trackChange: function(yt_event) {
-		console.log("state changed: "+yt_event);
+        if(yt_event == 2)
+        {
+            console.log("video paused @ "+ytl.getVariable('currenttime'));
+            ytl.showState = true;
+        }
+        if(ytl.showState && yt_event == 1)   
+        {
+            console.log("video played @ "+ytl.getVariable('currenttime'));
+            ytl.showState = false;
+        }
+        
 		// 1 - play
 		// 2 - pause
 		// 3 - buffer (sometimes on seek?)
@@ -2097,9 +2130,9 @@ ytl = {
 				clearInterval(ytl.doubleChecker);
 				ytl.doubleChecker = setInterval(ytl.onStateChangeCheckAction, 2000);
 
-                // L: Added a function to check for seeks every second
+                // L: Added a function to check for seeks every (half) second
                 clearInterval(ytl.seekChecker);
-                ytl.seekChecker = setInterval(ytl.catchSeeks, 1000);
+                ytl.seekChecker = setInterval(ytl.catchSeeks, 500);
 				// L: Adding my own event listener - may need to be outside this func?
 				ytl.player.removeEventListener('onStateChange', ytl.trackChange, false);
 				ytl.player.addEventListener('onStateChange', ytl.trackChange, false);
