@@ -1941,11 +1941,11 @@ ytl = {
 						// L: Loop when end of segment is reached. Triggers states 2, 3, 1 if simply playing to the end
 						// If user tried to seek outside of video, will trigger states 3, 1
                         if(ytl.getVariable('currenttime') > ytl.getVariable('endtime') + 2)
-                        { console.log("user tried to seek forward out of loop"); }
+                        { console.log("user tried to seek forward out of loop to "+ ytl.getVariable('currenttime')); }
 						else if(ytl.getVariable('currenttime') > ytl.getVariable('endtime') - 0.1)
 						{ }//console.log("end of loop crossed naturally"); }
 						else if(ytl.getVariable('starttime') > ytl.getVariable('currenttime') + 0.1)
-						{ console.log("user tried to seek backwards out of loop"); }
+						{ console.log("user tried to seek backwards out of loop to "+ytl.getVariable('currenttime')); }
 					
                         // L: Turn off state printing, may be problem with async
                         //ytl.showState = false;
@@ -2069,11 +2069,11 @@ ytl = {
         {
             if( curr_time > (prev_time + 1) )
             {
-                console.log('forward seek detected from '+prev_time+' to ' +curr_time);
+                console.log('forward seek detected from '+ytl.session['prev_time']+' to ' +ytl.getVariable('currenttime'));
             }
             else if( curr_time < prev_time )
             {
-                console.log('backwards seek detected from '+prev_time+' to ' +curr_time);
+                console.log('backwards seek detected from '+ytl.session['prev_time']+' to ' +ytl.getVariable('currenttime'));
             }
         } else    {ytl.showSeek = true;}
         ytl.session['prev_time'] = ytl.getVariable('currenttime');
