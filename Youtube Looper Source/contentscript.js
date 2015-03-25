@@ -300,6 +300,33 @@ ytl = {
 		
 		window.removeEventListener('resize', ytl.windowResizedAction, false);
 		window.addEventListener('resize', ytl.windowResizedAction, false);	
+		
+		// L: Adding my own event listeners
+		// on click button will trigger
+		// on enter 'enter' will trigger, then button
+		// Search button click
+		document.getElementById("search-btn").removeEventListener('click', ytl.searchActionButton);
+		document.getElementById("search-btn").addEventListener('click', ytl.searchActionButton);
+		
+		//Enter press in search bar
+		document.getElementById("masthead-search-term").removeEventListener('keydown', ytl.searchActionEnter);
+		document.getElementById("masthead-search-term").addEventListener('keydown', ytl.searchActionEnter);
+
+	},
+	
+	searchActionButton: function(evt) {
+		//evt.stopPropagation(); evt.preventDefault();
+		console.log("Button was clicked: "+ document.getElementById("masthead-search-term").value);
+		return;
+	},
+	
+	searchActionEnter: function (evt) {
+		//evt.stopPropagation(); evt.preventDefault();
+		if (evt.keyCode === 13)
+		{
+			console.log("Enter was pressed: " + document.getElementById("masthead-search-term").value);
+		}
+		return;
 	},
 
 	/*
