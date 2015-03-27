@@ -2310,6 +2310,8 @@ ytl = {
 	
 	buttonAction: function () {
 		console.log('panel button clicked');
+		// L: Hiding side panel
+		document.getElementById('watch7-sidebar-contents').style.display = 'none';
 		if (ytl.getOption('showPanel') == false) ytl.panelDisplay(false);
 		if ( ytl.checkIf('playlist-queue') ) {
 			// Not working with google cast at this moment.
