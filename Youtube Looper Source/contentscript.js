@@ -1048,12 +1048,17 @@ ytl = {
 		// Set up CSS
 		var setButtons = document.createElement('div');
 		setButtons.id = 'set-buttons-div';
+		setButtons.style.margin = "20px 0 10px";
 		
 		var startButton = document.createElement('input'),
 			endButton = document.createElement('input'),
 			loopButton = document.createElement('input');
 		startButton.type = endButton.type = loopButton.type = 'button';
 		startButton.className = endButton.className = loopButton.className = 'yt-uix-set-button';
+		var butt_atr = 'padding: 10px 15px; font-size: 18px; margin: auto;';
+		startButton.setAttribute('style', butt_atr);
+		endButton.setAttribute('style', butt_atr);
+		loopButton.setAttribute('style', butt_atr);
 		startButton.value = 'Set Start';
 		endButton.value = 'Set End';
 		loopButton.value = 'Break Loop';
