@@ -352,8 +352,13 @@ ytl = {
 			ytl.buttonContainer = document.getElementById('watch8-secondary-actions');
 //			ytl.panelContainer = document.getElementById('watch8-action-panels') || document.getElementById('watch-action-panels');
 //			ytl.buttonContainer = document.getElementById('watch8-secondary-actions');
-			ytl.panelContainer = document.getElementById('page');
-			ytl.panelParentContainer = document.getElementById('page');
+
+			// L: These work for outside of watch7, but formatting becomes weird
+			// ytl.panelContainer = document.getElementById('page');
+			// ytl.panelParentContainer = document.getElementById('page');
+			ytl.panelContainer = document.getElementById('watch7-content');
+			ytl.panelParentContainer = document.getElementById('watch7-content');
+			
 			ytl.sharebutton = ytl.buttonContainer.getElementsByClassName('action-panel-trigger-share')[0];
 		}
 	} catch (e) {
@@ -1128,7 +1133,8 @@ ytl = {
 		var sliderContainer = document.createElement('div');
 		sliderContainer.id = 'loop-panel-slider-container';
 		sliderContainer.style.paddingTop = '4px';
-		sliderContainer.style.margin = '0 25px 30px';
+		// sliderContainer.style.margin = '0 25px 30px';
+		sliderContainer.style.margin = '0 0 30px';
 		sliderContainer.appendChild(slider);
 		
 		// Add to Panel
@@ -1480,14 +1486,16 @@ ytl = {
 		}
 		var content = document.createElement('div');
 		// L: This is where we set our panel in the page - thepage
-		var p = ytl.panelContainer.childNodes[4]; // SUPER hack -- the fourth child is the 'content' pane, which we want to insert the timeline before
+		var p = ytl.panelContainer.childNodes[0]; // SUPER hack -- the fourth child is the 'content' pane, which we want to insert the timeline before - set to 4
 			content.setAttribute('id', 'action-panel-loop');
 			content.setAttribute('class', 'action-panel-content hid');
 			content.setAttribute('data-panel-loaded', 'true');
 			if (ytl.layout == '2014') {
-				content.style.padding = '14px 20px';
+				//content.style.padding = '14px 20px';
+				content.style.padding = 0;
 			} else {
-				content.style.padding = '24px 35px 32px';
+				//content.style.padding = '24px 35px 32px';
+				content.style.padding = 0;
 				content.style.width = '568px';
 				if(document.getElementById('watch7-secondary-actions'))
 				document.getElementById('watch7-secondary-actions').addEventListener('click', function(){
