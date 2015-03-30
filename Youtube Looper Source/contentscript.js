@@ -87,6 +87,15 @@ ytl = {
 			ytl.logging.push(input);
 		}
 	},
+	llog: function(eventType, vidTime, logMessage) {
+		var mylogger = {};
+		mylogger['date'] = new Date();
+		mylogger['eventType'] = eventType;
+		mylogger['vidTime'] = vidTime;
+		mylogger['message'] = logMessage;
+		console.log('logging: '+ mylogger);
+		localStorage[ytl.kw + ytl.ls] = JSON.stringify(mylogger);
+	},
 	info: function() {
 		var input = '';
 		for (var i = 0; i < arguments.length; i++)
@@ -189,6 +198,10 @@ ytl = {
         
         // L: To help catch seeks
         ytl.session['prev-time'] = 0;
+		
+		// L: localStorage logging - keyword and count
+		ytl.kw = 'logan.';
+		ytl.ls = 0;
 	},
 
 	/*
@@ -2322,7 +2335,9 @@ ytl = {
 	},
 	
 	buttonAction: function () {
-		console.log('panel button clicked');
+		// console.log('panel button clicked');
+		ytl.llog('panel', ytl.getVariable('currenttime'), "");
+		
 		// L: Hiding side panel
 		document.getElementById('watch7-sidebar-contents').style.display = 'none';
 		if (ytl.getOption('showPanel') == false) ytl.panelDisplay(false);
