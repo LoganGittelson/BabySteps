@@ -354,6 +354,8 @@ ytl = {
 		}
 		ytl.lang = ytl.getCorrectLocale(ytl.lang);
 		ytl.player = ytl.getVariable('player');
+		// console.log("Player gotten in setVariables");
+		// L: Update log, probably make another function
 		ytl.layout = '2013';
 		ytl.buttonContainer = document.getElementById('watch7-sentiment-actions');
 		ytl.panelContainer = document.getElementById('watch7-action-panels');
