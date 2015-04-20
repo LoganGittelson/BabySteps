@@ -10,25 +10,19 @@
   * L: My notes
   *
   * Check prototype and match behaviour - refine existing behaviour (seek out of loop)
-  * Center button
-  * Create divs showing loops - when to track?
+  * Move divs showing loops to side
   * Move button and slider
   * Considering keeping some other functions (loop count etc)
-  * Do stuff with 'in-loop'
-  * Reset everything on break loop? - remember to take out code from set start then
   * 
-  * Fix error in log from trying to get currtime while on search page
   * Fix when starting with loop url
-  *
   *
   * look at setInterval functions - how is loopaction called so often inside loops
   *
   *
   * logging:
   * Use like: ytl.llog("eventType", ytl.getVariable('currenttime'), "message");
-  * put keyword and current vid id in local storage
-  * detect new video when current video ID (excluding null) differs from stored ID
   * use list structure, with vid id and url being first entry, then rest of entries being dicts
+  * get vid name
   * consider better defining eventType
   * consider tracking how many time video/loop is played
   * try tracking when video is loaded in (so we can see what they watch, even if they don't click anything)
