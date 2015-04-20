@@ -18,15 +18,20 @@
   * Reset everything on break loop? - remember to take out code from set start then
   * 
   * Fix error in log from trying to get currtime while on search page
+  * Fix when starting with loop url
   *
   *
   * look at setInterval functions - how is loopaction called so often inside loops
   *
   *
   * logging:
+  * Use like: ytl.llog("eventType", ytl.getVariable('currenttime'), "message");
   * put keyword and current vid id in local storage
   * detect new video when current video ID (excluding null) differs from stored ID
   * use list structure, with vid id and url being first entry, then rest of entries being dicts
+  * consider better defining eventType
+  * consider tracking how many time video/loop is played
+  * try tracking when video is loaded in (so we can see what they watch, even if they don't click anything)
   */
   
 /*
@@ -116,7 +121,7 @@ ytl = {
         return;
     },
     resetSession: function(in_kw) {
-        console.log("resetting session: " + in_kw);
+        // console.log("resetting session: " + in_kw);
         ytl.endSession(in_kw);
         ytl.newSession(in_kw);
         return;
@@ -149,25 +154,27 @@ ytl = {
             ytl.storage[kw + ytl.storage[kw + 'vidcount']] = JSON.stringify(startLog);
         }
         else {
-            console.log("Same video detected");
+            // console.log("Same video detected");
         }
         return;
     },
 	llog: function(eventType, vidTime, logMessage) {
         var kw = ytl.storage['keyword'];
         // Check if new vid
-        var vidURL = ytl.player.getVideoUrl();
-        ytl.checkVid(vidURL);
+        if(ytl.player) {
+            var vidURL = ytl.player.getVideoUrl();
+            ytl.checkVid(vidURL);
+        }
         // Set up dict to log
         // ytl.storage[keyword + vidcount] gets a list, first item is dict for general vid info (id, title, number, max_log)
         // rest of entries in list (1+) are dicts containing log count, date, event type, vid time, and message
 		var mylogger = {};
-        mylogger['num'] = ytl.storage['logcount'];
+        mylogger['lognum'] = ytl.storage['logcount'];
 		mylogger['date'] = new Date();
 		mylogger['eventType'] = eventType;
 		mylogger['vidTime'] = vidTime;
 		mylogger['message'] = logMessage;
-		console.log('logging: '+ mylogger);
+		console.log('logging: '+ logMessage);
         var mylist = JSON.parse(ytl.storage[kw + ytl.storage[kw + 'vidcount']])
         mylist.push(mylogger);
         mylist[0]['max_log'] = ytl.storage['logcount'];
@@ -424,6 +431,12 @@ ytl = {
 	searchActionButton: function(evt) {
 		//evt.stopPropagation(); evt.preventDefault();
 		console.log("Button was clicked: "+ document.getElementById("masthead-search-term").value);
+        var curr_time = ytl.getVariable('currenttime');
+        if( !curr_time) {
+            console.log("Searched while outside of video");
+            curr_time = "";
+        }
+        ytl.llog("search", curr_time, document.getElementById("masthead-search-term").value);
 		return;
 	},
 	
@@ -432,6 +445,12 @@ ytl = {
 		if (evt.keyCode === 13)
 		{
 			console.log("Enter was pressed: " + document.getElementById("masthead-search-term").value);
+            var curr_time = ytl.getVariable('currenttime');
+            if( !curr_time ) {
+                console.log("Searched while outside of video");
+                curr_time = "";
+            }
+            ytl.llog("search", curr_time, document.getElementById("masthead-search-term").value);
 		}
 		return;
 	},
@@ -647,8 +666,8 @@ ytl = {
 				return Number(ytl.getSeconds(document.getElementById('loop-start-time').value));
 			case 'input-endtime':
 				return Number(ytl.getSeconds(document.getElementById('loop-end-time').value));
-			case 'currenttime':
-				return  (ytl.player.getCurrentTime != undefined) ? ytl.player.getCurrentTime() : false;
+			case 'currenttime':  //L: Adding a catch for null current time
+				return  (ytl.player && ytl.player.getCurrentTime != undefined) ? ytl.player.getCurrentTime() : false;
 			case 'duration':
 				return (ytl.player.getDuration != undefined) ? ytl.player.getDuration() : false;
 			case 'playerstate':
@@ -1459,6 +1478,7 @@ ytl = {
             var bstate = ytl.getVariable('buttonState');
 			// console.log("button press: " + bstate);
             console.log("pressed '" + document.getElementById('set-buttons-div').children[bstate].value + "' @ "+ ytl.getVariable('currenttime'));
+            ytl.llog('button', ytl.getVariable('currenttime'), document.getElementById('set-buttons-div').children[bstate].value);
 			// 0, 1, 2
 			var nstate = (bstate+1) % 3;
 			// Check nstate
@@ -1500,10 +1520,13 @@ ytl = {
             document.getElementById('loops-div').appendChild(myloop);
 			
 			console.log(myloop.id+": "+myloop.dataset.starttime+" - "+myloop.dataset.endtime);
+            // Might want to make the log more specific, less parsing later on
+            ytl.llog("new_loop", ytl.getVariable('currenttime'), myloop.id+": "+myloop.dataset.starttime+" - "+myloop.dataset.endtime);
             
             //add event listener for when clicked
             myloop.addEventListener('click', function(e) {
 				console.log("loop clicked: " + myloop.id);
+                ytl.llog("load_loop", ytl.getVariable('currenttime'), myloop.id);
 				ytl.setVariable('starttime', myloop.dataset.starttime);
 				ytl.setVariable('endtime', myloop.dataset.endtime);
 				ytl.session['yt-button-state'] = 2;
@@ -1628,6 +1651,8 @@ ytl = {
 		var option = document.createElement('div');
 		option.id = 'loop-panel-optionslink-container';
 		option.style.position = 'absolute';
+        // L: Hiding this
+        option.style.display = 'none';
 		if (ytl.layout == '2014') {
 			option.style.right = '34px';
 			option.style.top = '12px';
@@ -2089,6 +2114,7 @@ ytl = {
                         // L: Segment loop - {{
 						// L: Loop when end of segment is reached. Triggers states 2, 3, 1 if simply playing to the end
 						// If user tried to seek outside of video, will trigger states 3, 1
+                        // Currently not lloging these
                         if(ytl.getVariable('currenttime') > ytl.getVariable('endtime') + 2)
                         { console.log("user tried to seek forward out of loop to "+ ytl.getVariable('currenttime')); }
 						else if(ytl.getVariable('currenttime') > ytl.getVariable('endtime') - 0.1)
@@ -2151,6 +2177,7 @@ ytl = {
                     //ytl.showState = false;
                     ytl.showSeek = false;
 					console.log("full vid auto loop");
+                    ytl.llog("full_loop", ytl.getVariable('currenttime'), "full video auto loop");
                     // L: Taking out manual pause and plays
 					// ytl.player.pauseVideo();
 					ytl.player.seekTo(0, true);
@@ -2219,10 +2246,12 @@ ytl = {
             if( curr_time > (prev_time + 1) )
             {
                 console.log('forward seek detected from '+ytl.session['prev_time']+' to ' +ytl.getVariable('currenttime'));
+                ytl.llog("seek", ytl.getVariable('currenttime'), 'forward seek from '+ytl.session['prev_time']+' to ' +ytl.getVariable('currenttime'));
             }
             else if( curr_time < prev_time )
             {
                 console.log('backwards seek detected from '+ytl.session['prev_time']+' to ' +ytl.getVariable('currenttime'));
+                ytl.llog("seek", ytl.getVariable('currenttime'), 'backwards seek from '+ytl.session['prev_time']+' to ' +ytl.getVariable('currenttime'));
             }
         } else    {ytl.showSeek = true;}
         ytl.session['prev_time'] = ytl.getVariable('currenttime');
@@ -2241,11 +2270,13 @@ ytl = {
         if(yt_event == 2)
         {
             console.log("video paused @ "+ytl.getVariable('currenttime'));
+            ytl.llog("pause", ytl.getVariable('currenttime'), "video paused");
             ytl.showState = true;
         }
         if(ytl.showState && yt_event == 1)   
         {
             console.log("video played @ "+ytl.getVariable('currenttime'));
+            ytl.llog("play", ytl.getVariable('currenttime'), "video played");
             ytl.showState = false;
         }
         
@@ -2432,7 +2463,7 @@ ytl = {
 	
 	buttonAction: function () {
 		// console.log('panel button clicked');
-		ytl.llog('panel', ytl.getVariable('currenttime'), "");
+		ytl.llog('panel', ytl.getVariable('currenttime'), "panel opened");
 		
 		// L: Hiding side panel
 		document.getElementById('watch7-sidebar-contents').style.display = 'none';
