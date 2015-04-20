@@ -17,7 +17,7 @@
   * Do stuff with 'in-loop'
   * Reset everything on break loop? - remember to take out code from set start then
   * 
-  * Track search
+  * Fix error in log from trying to get currtime while on search page
   *
   *
   * look at setInterval functions - how is loopaction called so often inside loops
@@ -92,14 +92,88 @@ ytl = {
 			ytl.logging.push(input);
 		}
 	},
+    endSession: function(old_kw) {
+        console.log("ending session: "+old_kw);
+        // Erase old log stuff
+        var numVids = ytl.storage[old_kw + 'vidcount'] + 1;
+        ytl.storage.removeItem(old_kw + 'vidcount');
+        for (i=0; i <  numVids; i++) {
+            ytl.storage.removeItem(old_kw + i);
+        }
+        // Should set up new session before continuing
+        // ytl.storage['keyword'] = 'defaultlog.';
+        return;
+    },
+    newSession: function(new_kw) {
+        console.log("starting session: " + new_kw);
+        
+        // Set up new keyword
+        ytl.storage['keyword'] = new_kw;
+        ytl.storage['logcount'] = 0;
+        ytl.storage['currvid'] = '';
+        ytl.storage[new_kw + 'vidcount'] = 0;
+        
+        return;
+    },
+    resetSession: function(in_kw) {
+        console.log("resetting session: " + in_kw);
+        ytl.endSession(in_kw);
+        ytl.newSession(in_kw);
+        return;
+    },
+    checkVid: function(vidURL) {
+        var kw = ytl.storage['keyword'];
+        // Parse out vid ID, or else time will keep throwing it off
+        var vidID = vidURL.split("v=")[1];
+        if(ytl.storage['currvid'] == '' || ytl.storage['currvid'] != vidID) {
+            if(ytl.storage['currvid'] == '') {
+                // currvid has not yet been set. This means this is the first video the extension has seen since loading in
+                console.log("First video detected: " + vidID);
+            }
+            else {
+                // currvid has been set, this is a new video, different than the previous
+                console.log("New video detected: " + vidID);
+                ytl.storage[kw + 'vidcount'] = Number(ytl.storage[kw + 'vidcount']) + 1;
+            }
+            // keyword + thing keeps track of total number of vid counts
+            //  ytl.storage[ytl.storage['keyword'] + '0'] = ytl.storage['vidcount'];
+            // logging starts at vid 0 for now
+            ytl.storage['logcount'] = 1;
+            ytl.storage['currvid'] = vidID;
+            // Set up new log list
+            var vidDict = {};
+            vidDict['vidID'] = vidID;
+            vidDict['vidnum'] = ytl.storage[kw + 'vidcount'];
+            vidDict['max_log'] = 0;
+            var startLog = [vidDict];
+            ytl.storage[kw + ytl.storage[kw + 'vidcount']] = JSON.stringify(startLog);
+        }
+        else {
+            console.log("Same video detected");
+        }
+        return;
+    },
 	llog: function(eventType, vidTime, logMessage) {
+        var kw = ytl.storage['keyword'];
+        // Check if new vid
+        var vidURL = ytl.player.getVideoUrl();
+        ytl.checkVid(vidURL);
+        // Set up dict to log
+        // ytl.storage[keyword + vidcount] gets a list, first item is dict for general vid info (id, title, number, max_log)
+        // rest of entries in list (1+) are dicts containing log count, date, event type, vid time, and message
 		var mylogger = {};
+        mylogger['num'] = ytl.storage['logcount'];
 		mylogger['date'] = new Date();
 		mylogger['eventType'] = eventType;
 		mylogger['vidTime'] = vidTime;
 		mylogger['message'] = logMessage;
 		console.log('logging: '+ mylogger);
-		localStorage[ytl.kw + ytl.ls] = JSON.stringify(mylogger);
+        var mylist = JSON.parse(ytl.storage[kw + ytl.storage[kw + 'vidcount']])
+        mylist.push(mylogger);
+        mylist[0]['max_log'] = ytl.storage['logcount'];
+        ytl.storage[ kw + ytl.storage[kw + 'vidcount']] = JSON.stringify(mylist);
+		//ytl.storage[ytl.storage['keyword'] + ytl.storage['logcount']] = JSON.stringify(mylogger);
+        ytl.storage['logcount'] = Number(ytl.storage['logcount']) + 1;
 	},
 	info: function() {
 		var input = '';
@@ -203,10 +277,25 @@ ytl = {
         
         // L: To help catch seeks
         ytl.session['prev-time'] = 0;
+        
+        // L: Set keyword if there is none
+        if( !ytl.storage['keyword'] ) {
+            ytl.storage['keyword'] = 'defaultlog.';
+        }
 		
-		// L: localStorage logging - keyword and count
-		ytl.kw = 'logan.';
-		ytl.ls = 0;
+        /*
+		// L: localStorage logging - KeyWord and Log Count and Current Video (ID) and video count and new session
+        // Might be unneseccary due to reset function
+        if( ytl.storage['newsession'] == 'true' ) {
+            console.log("new session detected");
+            var kw = 'logan.';
+            ytl.storage['keyword'] = kw;
+            ytl.storage['logcount'] = 0;
+            ytl.storage['currvid'] = '';
+            ytl.storage[kw + 'vidcount'] = 0;
+            ytl.storage['newsession'] = 'false';
+        }
+        */
 	},
 
 	/*
