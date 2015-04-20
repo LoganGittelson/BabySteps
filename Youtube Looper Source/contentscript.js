@@ -22,6 +22,11 @@
   *
   * look at setInterval functions - how is loopaction called so often inside loops
   *
+  *
+  * logging:
+  * put keyword and current vid id in local storage
+  * detect new video when current video ID (excluding null) differs from stored ID
+  * use list structure, with vid id and url being first entry, then rest of entries being dicts
   */
   
 /*
